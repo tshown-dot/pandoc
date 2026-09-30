@@ -27,8 +27,8 @@
     <div id="status" class="status"></div>
 
     <script type="module">
-        // Import the new stable 1.1.0 version
-        import { pandoc } from 'https://cdn.jsdelivr.net/npm/pandoc-wasm@1.1.0/+esm';
+        // Using esm.sh to bundle the markdown-docx library and bypass WebAssembly 404 errors
+        import markdownDocx, { Packer } from 'https://esm.sh/markdown-docx@0.4.1?bundle';
 
         const btn = document.getElementById('convert-btn');
         const input = document.getElementById('input');
@@ -47,20 +47,16 @@
             }
 
             btn.disabled = true;
-            showStatus("Downloading Pandoc WebAssembly Engine & Converting... (Takes a moment on first click)");
+            showStatus("Converting document... Please wait.");
 
             try {
-                // The new 1.1.0 API accepts command line arguments identically to the terminal version
-                const output = await pandoc("-f markdown+tex_math_dollars+tex_math_single_backslash -t docx", text, []);
+                // Convert Markdown & Math to a DOCX Document Object
+                const doc = await markdownDocx(text);
                 
-                // output.out returns the processed file data
-                const fileData = output.out;
+                // Pack the Document Object into a downloadable Blob
+                const blob = await Packer.toBlob(doc);
                 
-                // Ensure it is packaged as a Blob for downloading
-                const blob = fileData instanceof Blob ? fileData : new Blob([fileData], { 
-                    type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' 
-                });
-                
+                // Download the file
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
